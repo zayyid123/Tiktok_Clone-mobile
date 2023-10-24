@@ -7,7 +7,7 @@ import { CalendarIcon, MagnifyingGlassIcon } from "react-native-heroicons/outlin
 const NavbarTop = () => {
   return (
     <View
-      className='flex-row justify-between mt-1 px-2 py-3 items-center'
+      className='flex-row justify-between mt-1 px-2 py-3 items-center absolute top-0 right-0 left-0 z-30'
     >
       {/* live button */}
       <View
