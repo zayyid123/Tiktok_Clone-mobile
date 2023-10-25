@@ -5,13 +5,81 @@ import VerticalViewPager from "react-native-vertical-view-pager";
 import NavigationBottom from './components/NavigationBottom';
 import NavbarTop from './components/NavbarTop';
 import { Video } from 'expo-av';
+import { useEffect, useRef, useState } from 'react';
+import { FlatList } from 'react-native';
 
 const pixelRatio = PixelRatio.get();
 
 let { width, height } = Dimensions.get("window");
-height = height - (22 * pixelRatio)
+height = height - (10 * pixelRatio)
+
+const feed =[
+  {
+    id: 0,
+    video: require('./assets/feed/status1.mp4'),
+  },
+  {
+    id: 1,
+    video: require('./assets/feed/status2.mp4'),
+  },
+  {
+    id: 2,
+    video: require('./assets/feed/status3.mp4'),
+  }
+]
+
+const play = async (ref) => {
+  if (ref == null) {
+      return;
+  }
+
+  // if video is already playing return
+  const status = await ref.getStatusAsync();
+  if (status?.isPlaying) {
+      return;
+  }
+  try {
+      await ref.playAsync();
+  } catch (e) {
+      console.log(e)
+  }
+}
+
+const stop = async (ref) => {
+  if (ref == null) {
+      return;
+  }
+
+  // if video is already stopped return
+  const status = await ref.getStatusAsync();
+  if (!status?.isPlaying) {
+      return;
+  }
+  try {
+      await ref.stopAsync();
+  } catch (e) {
+      console.log(e)
+  }
+}
 
 export default function App() {
+  const [status, setstatus] = useState()
+  const mediaRefs = []
+
+  const onViewableItemsChanged = useRef(({ changed }) => {
+    changed.forEach(element => {
+      const cell = mediaRefs[element.key]
+      if (cell) {
+        console.log(element)
+        if (element.isViewable) {
+          play(cell)
+        } else {
+          stop(cell)
+        }
+      }
+    });
+  })
+
   return (
     <View className="flex-1 bg-red-600">
       <StatusBar style="light" backgroundColor='#000' translucent={false} />
@@ -29,40 +97,56 @@ export default function App() {
           }}
           className='w-full bg-black items-stretch'
         >
-          <VerticalViewPager showsVerticalScrollIndicator={false}>
-            {
-              [1,2,3,4,5].map((res, index) => {
-                return(
+          <FlatList
+            data={feed}
+            windowSize={4}
+            maxToRenderPerBatch={0}
+            removeClippedSubviews
+            viewabilityConfig={{
+              itemVisiblePercentThreshold: 1
+            }}
+            renderItem={({item}) => {
+              return(
+                <View 
+                  style={{
+                    flex: 1,
+                    width,
+                    height,
+                  }}
+                  className='flex-1 justify-center w-full items-center relative bottom-8'
+                >
                   <View 
-                    key={'vide'+index}
                     style={{
+                      width: "100%",
                       flex: 1,
-                      width,
-                      height,
+                      zIndex: 2
                     }}
-                    className='flex-1 justify-center w-full items-center relative bottom-8'
                   >
-                    <View style={styles.video}>
-                      <Video
-                        source={{
-                          uri: "http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4"
-                        }}
-                        rate={1.0}
-                        volume={1.0}
-                        isMuted={true}
-                        resizeMode="contain"
-                        shouldPlay
-                        bounce={false}
-                        isLooping
-                        style={styles.videoPlayer}
-                        useNativeControls={false}
-                      />
-                    </View>
+                    <Video
+                      ref={singleRef => mediaRefs.push(singleRef)}
+                      source={item.video}
+                      rate={1.0}
+                      volume={1.0}
+                      isMuted={false}
+                      resizeMode="contain"
+                      bounce={false}
+                      isLooping
+                      style={{
+                        width: "100%",
+                        zIndex: 2,
+                        flex: 1
+                      }}
+                      useNativeControls={false}
+                    />
                   </View>
-                )
-              })
-            }
-          </VerticalViewPager>
+                </View>
+              )
+            }}
+            keyExtractor={item => item.id}
+            pagingEnabled
+            decelerationRate={'normal'}
+            onViewableItemsChanged={onViewableItemsChanged.current}
+          />
         </View>
 
         {/* navigation bottom */}
@@ -71,155 +155,3 @@ export default function App() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    height: height - 90,
-    backgroundColor: "black",
-    zIndex: 1,
-    alignSelf: "stretch"
-  },
-  post: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    flex: 1,
-    zIndex: 2,
-    alignSelf: "stretch",
-    position: "relative",
-    bottom: 30
-  },
-  page_container: {
-    flex: 1,
-    width,
-    height: height - 90
-  },
-  video: {
-    width: "100%",
-    flex: 1,
-    zIndex: 2
-  },
-  videoPlayer: {
-    width: "100%",
-    zIndex: 2,
-    flex: 1
-  },
-  header: {
-    flexDirection: "row",
-    position: "absolute",
-    top: 40,
-    left: 75,
-    alignItems: "center"
-  },
-  spanCenterHeader: { color: "white", fontSize: 10 },
-  textLeftHeader: {
-    color: "grey",
-    paddingHorizontal: 10,
-    fontSize: 20
-  },
-
-  textRightHeader: {
-    color: "white",
-    paddingHorizontal: 10,
-    fontSize: 23,
-    fontWeight: "bold"
-  },
-  content: {
-    width: "75%",
-    position: "absolute",
-    left: 0,
-    bottom: 0,
-    zIndex: 3
-  },
-  InnerContent: {
-    width: "100%",
-    position: "relative",
-    bottom: 0,
-    justifyContent: "flex-end",
-    paddingHorizontal: 10,
-    flexDirection: "column"
-  },
-
-  name: { color: "white", marginVertical: 3, fontSize: 15, fontWeight: "bold" },
-  description: { color: "white", marginTop: 2, fontSize: 15 },
-  hashtags: { color: "white", fontWeight: "bold" },
-  componentMusic: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 10,
-    width: 190
-  },
-  imageIconMusic: {
-    marginRight: 15
-  },
-  iMusic: {
-    width: 20,
-    height: 20,
-    resizeMode: "contain"
-  },
-  nameMusic: {
-    color: "white",
-    fontSize: 15
-  },
-  translate: {
-    fontWeight: "bold",
-    color: "white",
-    marginVertical: 5
-  },
-  contentIcon: {
-    width: "20%",
-    position: "absolute",
-    bottom: 11,
-    right: 0,
-    alignItems: "center",
-    zIndex: 3
-  },
-  contentIconProfile: {
-    alignItems: "center",
-    marginBottom: 2
-  },
-
-  iconProfile: {
-    width: 50,
-    height: 50,
-    resizeMode: "cover",
-    borderRadius: 25,
-    borderColor: "white",
-    borderWidth: 1
-  },
-  iconPlusProfile: {
-    height: 35,
-    width: 25,
-    position: "relative",
-    bottom: 20,
-    zIndex: 5,
-    resizeMode: "contain"
-  },
-  iconsAction: {
-    alignItems: "center",
-    marginBottom: 20
-  },
-  contentIconAction: {
-    alignItems: "center",
-    marginBottom: 13
-  },
-  iconAction: {
-    height: 40,
-    width: 40
-  },
-  iconWhatsapp: {
-    height: 40,
-    width: 40,
-    resizeMode: "cover",
-    borderRadius: 20
-  },
-  textActions: { color: "white", textAlign: "center", width: 54 },
-  iconMusic: {
-    width: 50,
-    height: 50,
-    resizeMode: "cover",
-    borderRadius: 30
-  }
-});

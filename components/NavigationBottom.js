@@ -7,7 +7,7 @@ import { HomeIcon, UsersIcon, PlusIcon, ChatBubbleBottomCenterTextIcon, UserIcon
 const NavigationBottom = () => {
   return (
     <View
-      className='flex-row justify-between items-center p-2 z-40 border-t border-white absolute bottom-0 right-0 left-0'
+      className='flex-row justify-between items-center p-2 z-40 border-t border-white absolute bottom-0 right-0 left-0 bg-black'
     >
       {/* home button */}
       <View
